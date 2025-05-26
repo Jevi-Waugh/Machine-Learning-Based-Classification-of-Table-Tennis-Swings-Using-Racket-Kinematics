@@ -1,0 +1,70 @@
+\documentclass[12pt]{article}
+\usepackage{graphicx}    % For including images
+\usepackage{amsmath}     % For mathematical symbols
+\usepackage{caption}     % Better captions
+\usepackage{float}       % Precise float placement
+\usepackage{geometry}    % To adjust margins
+\geometry{margin=1in}
+
+\title{\textbf{Machine Learning-Based Classification of Table Tennis Swings Using Racket Kinematics}}
+\author{Jevi Waugh \\
+Faculty of Engineering, Architecture and Information Technology \\
+COMP4702 - Machine Learning}
+\date{May 2025}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+This report investigates the application of machine learning models to classify the demographics of table swings based on racket kinematics data, with a strong focus on predicting a combined age and gender label. The Data Set originally sourced from DRYAD has been slightly modified for the purpose of this report. We apply and compare three supervised classification algorithms, K-Nearest Neighbors (KNN), Support Vector Machines (SVM) and One-vs-Rest Logistic Regression, evaluating their performance using known evaluation metrics. Our findings provide insights into the discriminative power of racket motion features and the behavior of various classifiers on a real-word problem.
+\end{abstract}
+
+\section{Introduction and Data Preparation}
+\subsection{Objective of the Study}
+\subsection{Overview of Chosen Problem}
+\subsection{Data cleaning}
+rmeoving ??? and class iimbalance
+
+% Your introduction content here
+\begin{multicols}{2}
+\section{Exploratory Data Analysis}
+\subsection{Feature Engineering}
+\subsection{Encoding and Normalisation}
+\subsection{Overview and Dataset description}
+Include image of correlation matrix and distribution
+asymptotic minimiser
+\end{multicols}
+\section{Model 1: K-Nearest Neighbors (KNN)}
+\subsection{Model Training and Hyper-parameter tuning}
+\subsection{Accuracy and classification}
+\subsection{Evaluation Metrics and Results}
+\subsubsection{Accuracy and E_{new} evaluation}
+\subsubsection{Confusion Matrix}
+\subsubsection{ROC Curves}
+\subsubsection{Learning Curve}
+
+\section{Model 2: Logistic regression}
+\subsection{Solver and Regularisation Comparison}
+\subsection{Feature Importance via Coefficients}
+\subsection{Evaluation Metrics and Results}
+\subsection{PCA}
+\subsection{Feature selection and correlation}
+
+\section{Model 3: Support Vector Machine (SVM)}
+\subsection{Kernel and regularisation exploration}
+\subsection{Evaluation Metrics and Results}
+\subsection{Training on non-feature selection}
+This time we will explore deeper by training on a the original dataset which is highly correlated along some features and we will use a different kernel.
+
+\section{Comparative Analysis}
+\subsection{Summary Table of Model Performance}
+\subsection{Bias variance tradeoff}
+\subsection{Feature Sensitivity and Interpretability}
+
+
+\section{Conclusion}
+\subsection{Summary of Findings}
+\subsection{Insights on applied models}
+
+\end{document}
