@@ -17,13 +17,13 @@ COMP4702 - Machine Learning}
 \begin{document}
 
 \maketitle
-
+% START OF PAGE 1
 \begin{abstract}
-This report investigates the application of machine learning models to classify the demographics of table swings based on racket kinematics data, with a strong focus on predicting a combined age and gender label. The Data Set originally sourced from DRYAD has slightly been modified for the purpose of this report. We apply and compare three supervised classification algorithms, K-Nearest Neighbors (KNN), Support Vector Machines (SVM) and One-vs-Rest Logistic Regression, evaluating their performance using known evaluation metrics. Our findings provide insights into the discriminative power of racket motion features and the behavior of various classifiers on a real-word problem.
+This report investigates the application of machine learning models to classify the demographics of table swings based on racket kinematics data, with a strong focus on predicting a combined age and gender label. The Data Set originally sourced from DRYAD has slightly been modified for the purpose of this report. We apply and compare three supervised classification algorithms, K-Nearest Neighbours (KNN), Support Vector Machines (SVM) and One-vs-Rest Logistic Regression, evaluating their performance using known evaluation metrics. Our findings provide insights into the discriminative power of racket motion features and the behaviour of various classifiers on a real-word problem. 
 \end{abstract}
-
+%
 \section{Introduction}
-Human motion analysis and dexterity is a core area of research in sports, particularly in table tennis. In the context of table tennis, it is important to understand how swing patterns relate to certain demographic attributes such as age and gender, which can inform training strategies and biomechanical insights such as angular velocity, acceleration, power spectral density, etc. This report explores the use of supervised machine learning models to classify a composite label consisting of age and gender from the table tennis-racket-swing dataset. Pre-Processing will be required to ensure that valid numerical data are utilised efficiently. The considered ML models: K-Nearest Neighbor (K-NN), logistic regression and kernel based methods (such as a support vector machine) will be used. The purpose of this report is not to only maximise accuracy and lower $E_{new}$, but to primarily make a critical evaluation of each model's behavior, generalisation capability, feature proccessing, and sensitivity to hyper-parameters.
+Human motion analysis and dexterity is a core area of research in sports, particularly in table tennis. In the context of table tennis, it is important to understand how swing patterns relate to certain demographic attributes such as age and gender, which can inform training strategies and biomechanical insights such as angular velocity, acceleration, power spectral density, etc. This report explores the use of supervised machine learning models to classify a composite label consisting of age and gender from the table tennis-racket-swing dataset. Pre-Processing will be required to ensure that valid numerical data are utilised efficiently. The considered ML models: K-Nearest Neighbor (K-NN), logistic regression and kernel based methods (such as a support vector machine) will be used. The purpose of this report is not to only maximise accuracy and lower $E_{new}$, but to primarily make a critical evaluation of each model's behaviour, generalisation capability, feature processing, and sensitivity to hyper-parameters.
 
 \section{Exploratory Data Analysis}
 The provided dataset had some irregularities in terms of feature values and also had other inconsistencies with our classification task. The features that were dropped are 'id' and 'date' primarily because ID identifies and metadata impertinent to the player kinematics will strictly skew the classification workflow as they are strictly not-relevant to the problem.
@@ -31,7 +31,7 @@ The provided dataset had some irregularities in terms of feature values and also
 Our classification problem will make use one-hot-encoding for features in Table~\ref{tab:cat-values} excluding "???".  Age encodes,  low $\rightarrow$ 0, medium $\rightarrow$ 1, high $\rightarrow$ 2. This provides us the following 6 labels as shown in Table~\ref{tab:encoding-scheme}. 
 We then represent these modalities as low $\rightarrow$ Young, medium $\rightarrow$ Mid-age, high $\rightarrow$ Older.
 For gender, we have binary numerical values which we interpret as, 0 $\rightarrow$ Female, and 1 $\rightarrow$ Male. 
-\footnote{Note that we do not encode gender but rather interpret it. Same for age but we encode once and the interpret using known terminology}
+\footnote{Note that Gender is interpreted, not encoded; age is encoded once, then interpreted via standard terms.}
 \begin{table}[H]
 \centering
 \caption{Encoding scheme for combined gender and age classification}
@@ -49,10 +49,11 @@ For gender, we have binary numerical values which we interpret as, 0 $\rightarro
 \end{tabular}
 \label{tab:encoding-scheme}
 \end{table}
-The dataset will be either normalised using the formula $x_{ij}^{new} = {\dfrac {x_{ij} - min_l{(x_{lj})}} {max_l{(x_{lj})} - min_l{(x_{lj})}}}$ or standardised, using   $Z={\dfrac {\bar{X} - \mu} {\sigma}}$depending on the model's sensitivity to feature scaling and the distribution of the data.
+The dataset will be either normalised using the formula \begin{equation}x_{ij}^{new} = {\dfrac {x_{ij} - min_l{(x_{lj})}} {max_l{(x_{lj})} - min_l{(x_{lj})}}}\label{eq:minmax}
+\end{equation} or standardised, using   $Z={\dfrac {\bar{X} - \mu} {\sigma}}$depending on the model's sensitivity to feature scaling and the distribution of the data.
 \subsection{Dataset description and assumptions}
 \label{subsec:dataset-description-and-assumptions}
-The dataset has 97,355 data-points and 49 features excluding 'id' and 'date'. There were other inconsistencies such as missing values labelled as "???" in certain columns (see Table~\ref{tab:cat-values}). There were 5 missing data points in each random variable (feature), 20 values, a total of which their rows were dropped. We also assume that the dropped rows won't affect prediction accuracy given that its only $5.13 \times 10^{-5}$\% of the entire data set.
+The dataset has 97,355 data-points \footnote{Modified data from source \cite{dryad_tabletennis2021}.} and 49 features excluding 'id' and 'date'. There were other inconsistencies such as missing values labelled as "???" in certain columns (see Table~\ref{tab:cat-values}). There were 5 missing data points in each random variable (feature), 20 values, a total of which their rows were dropped. We also assume that the dropped rows won't affect prediction accuracy given that its only $5.13 \times 10^{-5}$\% of the entire data set.
 
 \begin{table}[H]
 \centering
@@ -69,47 +70,163 @@ Weight     & \texttt{high, medium, low, ???} \\
 \end{tabular}
 \label{tab:cat-values}
 \end{table}
-Furthermore, an analysis on class imbalance was made to ensure full interpretability when we make predictions. We can see that in Figure~\ref{fig:stacked-results} gender has a class imbalance of 60-40\%.To address the class imabalance in gender, we will use the stratify parameter in Sciki-learn's \texttt{train\_test\_split}
- function to ensure that proportion of each class is preserved in both the training and test sets. Without stratification, random splitting of the data might over-represent one class leading to a biased model. While this imbalance is not as extreme as  presented ones such as Figure~\ref{fig:stacked-hand-results}, this ensures a much more accurate model. Handedness and holdRacketHanded both have an exact imabalance of 83-16\%. We will address this later during feature selection.
+Furthermore, an analysis on class imbalance was made to ensure full interpretability when we make predictions. We can see that in Figure~\ref{fig:stacked-results} gender has a class imbalance of 60-40\%.To address the class imbalance in gender, we will use the stratify parameter in Scikit-learn's \texttt{train\_test\_split}
+ function to ensure that proportion of each class is preserved in both the training and test sets. Without stratification, random splitting of the data might over-represent one class leading to a biased model. While this imbalance is not as extreme as  presented ones such as Figure~\ref{fig:stacked-hand-results}, this ensures a much more accurate model. \texttt{Handedness} and \texttt{holdRacketHanded} both have an exact imbalance of 83-16\%. We will address this later during feature selection. 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth]{gender.png}
+    \includegraphics[width=0.85\linewidth]{images/gender.png}
     \caption{Gender Imbalance}
     \label{fig:stacked-results}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth]{hand_data.png}
+    \includegraphics[width=0.85\linewidth]{images/hand_data.png}
     \caption{Hand data Imbalance}
     \label{fig:stacked-hand-results}
 \end{figure}
 
-We also observe the distributions of each numerical feature in the figures in the appendix, where the general assumption is that most features do not come from a normal distrbution as, most features are skewed to the right and others look uniform. Features such as \texttt{newv1}, \texttt{newv2} and \texttt{g\_max} appear to follow a Gaussian distribution, however, we cannot assume normality without statistical validation. The Central Limit Theorem suggests that convergence to a Gaussian distribution as $n \rightarrow \infty $. This is only aymptotic and does not guarantee Gaussianity in our given finite samples. Hence we will make the assumption that the dataset comprises a mixture of distributions, especially since this is a finite sample and not on the behaviour as $n \rightarrow \infty$
+We also observe the distributions of each numerical feature in the figures in the appendix. While some features exhibit skewness and uniformity, many including \texttt{newv1}, \texttt{newv2} and \texttt{g\_max} appear to follow a roughly Gaussian distribution. Although strict normality cannot be assumed without some sort of formal statistical testing, we proceed under the simplifying assumption that the data is normally distributed.  The Central Limit Theorem suggests that convergence to a Gaussian distribution as $n \rightarrow \infty $, even when the underlying data is not perfectly Gaussian.\footnote{For intuition, imagine the histogram having smaller bin widths—this would clarify whether the distribution approximates a known form.}
+ This is considered a reasonable assumption for the purposes of standardisation and model compatibility.
 
-Before applying any machine learning model, we will indentify potential redundancy among features by computing a Pearson correlation matrix as seen in Figure~\ref{fig:correlation-matrix}
+Before applying any machine learning model, we will identify potential redundancy among features by computing a Pearson correlation matrix as seen in Figure~\ref{fig:correlation-matrix}
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth]{correlation_matrix.png}
-    \caption{Pearon's correlation matrix}
+    \includegraphics[width=0.85\linewidth]{images/correlation_matrix.png}
+    \caption{Pearson's correlation matrix}
     \label{fig:correlation-matrix}
 \end{figure}
-We can see that the acceleration, velocity and gyro-signal features are heavily correlated. Highly correlated features can introduce multicollinearity which can negatively impact a model that assumes feature independence such as (Logistic regression). Dropping highly correlated features will be further explored in other models to evaluate its effectiveness and generalisation.
-
-\section{Model 1: K-Nearest Neighbors (KNN)}
+We can see that the acceleration, velocity and gyro-signal features are heavily correlated. Highly correlated features can introduce multicollinearity which can negatively impact a model that assumes feature independence (such as Logistic regression). Dropping highly correlated features will be further explored in other models to evaluate its effectiveness and generalisation.
+% START OF PAGE 2
+\section{Model 1: K-Nearest Neighbours (KNN)}
+We will first explore K-Nearest neighbour as it's a non-parametric model that uses the euclidean distance metric. We will also discuss how normalisation and this distance metric simultaneously affect the accuracy.
 \subsection{Model Training and Hyper-parameter tuning}
 
-\subsection{Accuracy and classification}
-\subsection{Evaluation Metrics and Results}
-\subsubsection{Accuracy and $E_{new}$ evaluation}
-\subsubsection{Confusion Matrix}
-\subsubsection{ROC Curves}
-\subsubsection{Cross validation and learning curve}
+From an experimentation perspective, we will normalise instead of standardise to see how the model operates disregarding our initial assumption about the distribution of the data. First we train an initial model with \texttt{K=1, K=3}, requiring approximately 5 minutes of computation time during model training and with an 80/20 train-test split, reserving 20\% of the data for testing. This resulted into a classification accuracy of 53\% and 63\% respectively. Empirically speaking, we observed (based on the distribution of the random variables) that when features are skewed or contain outliers, normalisation compresses the majority of the data into a narrow range, which distorts the euclidean calculations and leads to reduced performance. This is another reason why our model focuses more on using the $z-score$ while normalisation fails Equation~\ref{eq:minmax}.
 
+Now suppose we standardise as we are meant to, which reduces the effect of differing feature scales and we apply the same conditions as before but for different $k$ values as outlined in Figure~\ref{fig:knn-k}.
+
+
+\subsection{Accuracy and classification}
+After model training and finding the optimal $k$ value based on the lowest $E_{new}$ in Figure~\ref{fig:knn-k}, we see high performance across all classes, with precision, recall, and F1-scores averaging around 96-97\%. The accuracy for training was 98\% while the test data set yielded 96\%. The confusion matrix in Figure~\ref{fig:knn-cm} confirms this, displaying strong diagonal dominance, especially for the two most accurate class 1-0 (Young Male) and 1-2 (Older Male), which achieved 1588 out of 1640, and 5849 out of 6060 correct predictions respectively. Minor off-diagonal entries suggest that misclassifications tend to occur between adjacent classes, likely due to overlapping feature distributions (e.g., confusion between 0-0 and 0-2 or between 1-1 and 1-2). This is expected in a demographic classification task where class boundaries may be gradual. 
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{images/knn/knn cm.png}
+    \caption{KNN Confusion Matrix}
+    \label{fig:knn-cm}
+\end{figure}
+Analysing scores in lower support classes such as class 1 (1320 samples) and class 3 (1640 samples) indicate that the model is not overfitting to the majority classes. Moreover, if we look deeper, there are about 70 instances (in Figure~\ref{fig:knn-cm}) of class 1-1 (Mid-age Male) confused with 1-2 (Older Male). Our argument to this is the inherent ambiguity in defining discrete age categories based on continuous physiological behaviour. There is no clear margin for what constitutes "mid-age" and "older", and swing kinematics in terms of angular velocity in all axes when using the racket could be very similar. For example, if the age cutoff for "mid-age" is 55 and the and "Older" began at 56, then individuals close to that threshold would likely produce nearly indistinguishable kinematic patterns. This could very well result in a very similar feature distribution. Hence, while class "medium" and "high" may signify the age of an individual, the model does not take into account, that they could potentially represent similar feature patterns near boundary ages.
+%
+\begin{table}[H]
+\centering
+\small  % Reduce font size
+\caption{Classification report for 6-class model}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{lcccc}
+\hline
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1} & \textbf{Support} \\
+\hline
+0 & 0.96 & 0.95 & 0.95 & 1990 \\
+1 & 0.94 & 0.95 & 0.95 & 1320 \\
+2 & 0.96 & 0.97 & 0.97 & 4400 \\
+3 & 0.99 & 0.97 & 0.98 & 1640 \\
+4 & 0.96 & 0.96 & 0.96 & 4060 \\
+5 & 0.97 & 0.97 & 0.97 & 6060 \\
+\hline
+\textbf{Accuracy} & \multicolumn{3}{c}{0.96} & 19470 \\
+\textbf{Macro Avg} & 0.96 & 0.96 & 0.96 & 19470 \\
+\textbf{Weighted Avg} & 0.96 & 0.96 & 0.96 & 19470 \\
+\hline
+\end{tabular}
+}
+\label{tab:classification-report}
+\end{table}
+
+In Table~\ref{tab:classification-report}, we can see the Macro avg and weighted all around around 0.96 suggesting consistent performance and reliable generalisation, given class imbalance present in the dataset was handled.
+% START OF PAGE 3
+\clearpage  % or \newpage
+The Figure~\ref{fig:knn-k} illustrates the test error $E_{new}$ across various $k$ values in the classifier. This was done iteratively with random sampling and tuning this $k$ hyper-parameter really showed certain drops in accuracy although the differences were not more than 0.01. A sharp drop is observed at $k=3$, which achieves the lowest test error 3.65\%, along with $k=5$ suggesting a good balance between bias and variance since their training accuracies were both 98\% which is close to 2\% higher than their test accuracy 96\%.  In this case, we choose $k=3$.
+\subsubsection{$E_{new}$ evaluation}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{images/knn/knnn k's.png}
+    \caption{$E_{new}$ for each $k$}
+    \label{fig:knn-k}
+\end{figure}
+As $K$ increases, the errors fluctuates but remain relatively low, suggesting that the model is stabilising beyond $k=3$. This supports the idea that selecting an appropriate $K$ value is crucial as very small $k$ or very large $k$ can affect the model's performance. Furthermore, the magnitude of $K$ is not the only thing that affects the classifier, but considering whether $K$ is odd or even. Using an odd $K$ helps reduce the likelihood of tied votes when classifying. Although ties are less common in a six-class problem compared to binary classification, they can still occur, especially when boundary samples are surrounded by neighbours from different classes. Figure~\ref{fig:knn-k} is an illustration of this effect where every even $k$ value is higher than the odd values next to it.
+\subsection{Evaluation Metrics and Results}
+We will perform a deeper evaluation using an ROC curve and the learning curves of training and testing through different batches of the hold-out validation data.WRITE MORE
+\subsubsection{ROC Curves}
+The ROC curve in Table~\ref{fig:knn-roc} was computed using the one-vs-rest approach for each class showing perfect AUC scores of 0.99 across almost all classes except class 1-0 which achieves 1.0. While this looks suspicious, let's understand that this has a connotation of KNN's strong ability to differentiate between classes, it is important to note that these high score only measure how well the model separates the classes and not whether it assigns the correct label and may still misclassify samples when forced to make difficult predictions as outlined on page 3 when classifying between "Mid-age Male" and "Older Male" etc...
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{images/knn/roc curve.png}
+    \caption{KNN ROC Curve.}
+    \label{fig:knn-roc}
+\end{figure}
+
+Although stratified sampling was used, class imbalance remains a fundamental characteristic. When evaluating using one-vs-rest ROC curves, larger classes such as 1-2 in Table~\ref{tab:combined-class-distribution} dominates the score computations and classifiers generally do better if they have more examples to learn from. In terms of the AUC bias, it seems that for KNN's result that, it's easier to get a high AUC for large classes, regardless if the precision, F1 or even the recall metric is worse for classes with less examples.
+
+\begin{table}[H]
+\centering
+\caption{Distribution of Combined Gender-Age Classes}
+\begin{tabular}{|c|c|}
+\hline
+\textbf{Class (Gender-Age)} & \textbf{Count} \\
+\hline
+1-2 (Male–High)   & 30,300 \\
+0-2 (Female–High) & 22,000 \\
+1-1 (Male–Medium) & 20,300 \\
+0-0 (Female–Low)  & 9,950 \\
+1-0 (Male–Low)    & 8,200 \\
+0-1 (Female–Medium) & 6,600 \\
+\hline
+\end{tabular}
+\label{tab:combined-class-distribution}
+\end{table}
+It is critical to make the observation that there are significantly less young people than "mid-age" and "older" people.
+
+\clearpage  % or \newpage
+\subsubsection{Cross validation and learning curve}
+We do another form of experimentation to see if our previous results hold, by strictly evaluating the performance of KNN with an initial 5-fold cross in Table~\ref{tab:cv-scores} with $k=3$ across the entire dataset. The resulting accuracy scores showed moderate variance across folds, with a mean accuracy of approximately 54.7\%.This is not ideal but we understand that this is also due to the fact that there was no \texttt{stratify} parameter in sci kit-learn's \texttt{cross\_val\_score} function not directly handling the class (combined label) imbalance.
+\begin{table}[H]
+\centering
+\caption{5-Fold Cross-Validation Accuracy Scores}
+\begin{tabular}{lc}
+\hline
+\textbf{Fold} & \textbf{Accuracy} \\
+\hline
+1 & 0.572 \\
+2 & 0.626 \\
+3 & 0.628 \\
+4 & 0.478 \\
+5 & 0.431 \\
+\hline
+\textbf{Mean} & \textbf{0.547} \\
+\hline
+\end{tabular}
+\label{tab:cv-scores}
+\end{table}
+While KNN evaluates each fold, it's strongly suspected that these accuracies are strictly modest due to the concentration of similar-class samples within individual folds.  This is problematic as we can see in Table~\ref{tab:combined-class-distribution}, classes such as 1-2 dominate while 0-1 are underrepresented. This limited diversity significantly lowers $E_{hold-out}$ in each fold reducing the model's ability to generalise.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{images/knn/learning rate and cross validation.png}
+    \caption{KNN Learning curve}
+    \label{fig:knn-lrate}
+\end{figure}
+We analyse the learning curve of KNN generated using 5-fold cross validation providing increase in accuracy for varying training sizes. For training accuracy, it's not surprising to see KNN memorising the data resulting in 100\%. However the validation accuracy for each training batch plateaus around 55\% even though it increases every time the training size increases. Although this gradual rise indicates that the model benefits from more data, the persistent gap between training and validation performance shows that there is an immense amount of high variance and overfitting. Unlike the previous split cross validation approach shown in Table~-\ref{tab:cv-scores}, this cross-validated method approach offers a more robust estimate of KNN's true capabilities as a model that primarily looks at local neighbourhood structures in the data. Since it has a big generalisation gap, it's fair to say that KNN struggles to generalise well in high-dimensional, imbalanced multi-classification problems. 
+
+This conclusion is made primarily because of KNN's inherent sensitivity to class imbalance class imbalance and because hold-out cross-validation forces the model to generalise over all parts of the data in terms of varying class distributions.  A more complex model is required to improve generalisation for our complex dataset.
+
+% START OF PAGE 4
+% \clearpage  % or \newpage
 \section{Model 2: Logistic regression}
-\subsection{Solver and Regularisation Comparison}
+\subsection{Solver and regularisation Comparison}
 \subsection{Feature Importance via Coefficients}
+
 \subsection{Evaluation Metrics and Results}
 \subsection{Cross validation and learning curve}
 \subsection{PCA}
@@ -124,9 +241,9 @@ This time we will explore deeper by training on a the original dataset which is 
 \section{Comparative Analysis}
 \subsection{Summary Table of Model Performance}
 
-\subsection{Bias variance tradeoff}
+\subsection{Bias variance trade off}
 
-\subsection{Feature Sensitivity and Interpretability}
+\subsection{Feature Sensitivity and interpretability}
 
 
 \section{Conclusion}
@@ -140,21 +257,21 @@ This time we will explore deeper by training on a the original dataset which is 
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{distribution_1.png}
+    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_1.png}
     \caption{Distributions of features (1 of 3).}
     \label{fig:distribution-1}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{distribution_2.png}
+    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_2.png}
     \caption{Distributions of features (2 of 3).}
     \label{fig:distribution-2}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth]{distribution_3.png}
+    \includegraphics[width=0.85\linewidth]{images/distribution_3.png}
     \caption{Distributions of features (3 of 3).}
     \label{fig:distribution-3}
 \end{figure}
@@ -165,7 +282,7 @@ This time we will explore deeper by training on a the original dataset which is 
 
 
 
-\cite{dryad_tabletennis2021}.
+
 
 \printbibliography
 
