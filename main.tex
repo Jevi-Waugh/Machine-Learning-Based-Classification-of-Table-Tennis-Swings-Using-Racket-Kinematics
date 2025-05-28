@@ -219,26 +219,206 @@ While KNN evaluates each fold, it's strongly suspected that these accuracies are
 \end{figure}
 We analyse the learning curve of KNN generated using 5-fold cross validation providing increase in accuracy for varying training sizes. For training accuracy, it's not surprising to see KNN memorising the data resulting in 100\%. However the validation accuracy for each training batch plateaus around 55\% even though it increases every time the training size increases. Although this gradual rise indicates that the model benefits from more data, the persistent gap between training and validation performance shows that there is an immense amount of high variance and overfitting. Unlike the previous split cross validation approach shown in Table~-\ref{tab:cv-scores}, this cross-validated method approach offers a more robust estimate of KNN's true capabilities as a model that primarily looks at local neighbourhood structures in the data. Since it has a big generalisation gap, it's fair to say that KNN struggles to generalise well in high-dimensional, imbalanced multi-classification problems. 
 
-This conclusion is made primarily because of KNN's inherent sensitivity to class imbalance class imbalance and because hold-out cross-validation forces the model to generalise over all parts of the data in terms of varying class distributions.  A more complex model is required to improve generalisation for our complex dataset.
+This conclusion is made primarily because of KNN's inherent sensitivity to class imbalance class imbalance and because hold-out cross-validation forces the model to generalise over all parts of the data in terms of varying class distributions.  A more complex model is required to improve generalisation for our high-dimensional dataset.
 
 % START OF PAGE 4
 % \clearpage  % or \newpage
 \section{Model 2: Logistic regression}
-\subsection{Solver and regularisation Comparison}
-\subsection{Feature Importance via Coefficients}
+Unlike KNN, logistic regression is a parametric model that learns a set of weights $\theta$ to separate classes using linear decision boundaries using the logistic loss~\ref{eq:logistic-loss}
 
-\subsection{Evaluation Metrics and Results}
-\subsection{Cross validation and learning curve}
-\subsection{PCA}
+\subsection{Solver and regularisation analysis}
+Training logistic regression took a significant amount of time (1H+) to compute and we had the same initialisations as KNN in terms of test size, standardisation and stratification. Three models were trained each with different solvers and regularisation  techniques. LIBLINEAR +L1 performed slightly better at 71.55\% followed closely by LBFGS solver + L2 (71.53\%) and lastly LIBLINEAR + L2 (71.47\%). This shows that the solvers and regularisation had little impact on the predictive accuracy for classifying gender and age combined. While L1 is more desirable, since it's meant to offer sparsity, this effect was not evident in the top feature coefficients shown in Table~\ref{tab:logreg-liblinear-l1} in compared to L2 as shown in Figure~\ref{tab:logreg-lbfgs-l2} and Figure~\ref{tab:logreg-liblinear-l2}.
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{Top 2 Features per Class — LIBLINEAR + L1 (Rounded Coefficients)}
+\begin{tabular}{|c|p{6.5cm}|}
+\hline
+\textbf{Class} & \textbf{Top Features (Coefficient)} \\
+\hline
+0 & \texttt{height\_high} (-4.80), \texttt{a\_mean} (1.75) \\
+1 & \texttt{playYears\_high} (-3.96), \texttt{height\_high} (-3.54) \\
+2 & \texttt{a\_mean} (2.25), \texttt{ax\_rms} (-2.01) \\
+3 & \texttt{height\_high} (13.15), \texttt{weight\_low} (4.89) \\
+4 & \texttt{playYears\_high} (-3.52), \texttt{ax\_rms} (1.97) \\
+5 & \texttt{ax\_mean} (-1.72), \texttt{a\_mean} (-1.64) \\
+\hline
+\end{tabular}
+\label{tab:logreg-liblinear-l1}
+\end{table}
+\clearpage
+Examining the coefficients, for example class 3 (1-0), \texttt{height\_high} has a very large positive coefficient meaning that it can strongly identify that class. \texttt{playYears\_high} and \texttt{height\_high} have strong negative coefficients, reducing the likelihood of those classes when those features are present. So logistic regresssion is very intentional when classifying.
+\subsection{Confusion matrix}
+Analysing the confusion matrix, it still does a remarkable job at classifying but only 71.55\% of the time. We can see that the model is effective at differentiating between the classes but struggles with several specific class boundaries. For instance class 0-0 and 0-2 show significant confusion, with 681 instances of Young female being misclassified as older female. Similarly, middle-aged men (1-1) is frequently confused with older men (1-2). Indicating that the model finds it incredibly difficult to separate adjacent group within the same gender. Nonetheless, it's evident to see that the model does a satisfactory job at capturing the broad structure of the dataset.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/cm-reduced-data.png}
+    \caption{Confusion Matrix (liblinear + L1)}
+    \label{fig:cm-liblinear-l1}
+\end{figure}
+This shows that utilising a model, using different hyper-parameters and solvers is not enough. Another experiment is to select certain features via correlation which is explored in the next section. 
 \subsection{Feature selection and correlation}
+Earlier we discussed the correlation matrix, putting that to use is extremely critical for logistic regression since it dropping features will be key for the model to perform better.
+The original correlation matrix in Figure~\ref{fig:correlation-matrix} showed several clusters particular around features such as velocity and gyroscope data, which can introduce multicollinearity and stop the model to be interpretable especially in terms of its coefficients. The dropped features were \texttt{[ax\_rms, ay\_rms, gx\_rms, gy\_rms, gz\_rms, a\_ma, a\_mean, g\_fft, g\_psdx, g\_entropy, holdRacketHanded\footnote{Note that we previously discussed how holdRacketHanded was an extremely imbalanced feature in Figure~\ref{fig:stacked-hand-results} and now it has been dropped.}]} 
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/reduced-correlation-matrix.png}
+    \caption{Reduced correlation matrix}
+    \label{fig:reduced-correlation-matrix}
+\end{figure}
+After applying a correlation threshold of $p=0.9$, the new correlation matrix shows a much clearer relationship and the big cluster has now been reduced to a smaller cluster with only one diagonal instead of 3 diagonal lines. 
+Finally we train out model again, but this time, we change the train-test-split to 90-10\%. Table~7 outlines the new accuracy for our logistic model. This time out accuracy is 73.2\% which is a 1.65\% increase. 
+\begin{table}[H]
+\centering
+\caption{Classification Report for Logistic Regression (LIBLINEAR + L1)}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
+\hline
+0 & 0.655 & 0.444 & 0.529 & 1990 \\
+1 & 0.615 & 0.403 & 0.487 & 1320 \\
+2 & 0.729 & 0.804 & 0.764 & 4400 \\
+3 & 0.890 & 0.891 & 0.891 & 1640 \\
+4 & 0.643 & 0.750 & 0.692 & 4060 \\
+5 & 0.794 & 0.790 & 0.792 & 6060 \\
+\hline
+\textbf{Accuracy} & \multicolumn{4}{c|}{0.732} \\
+\textbf{Macro Avg} & 0.721 & 0.680 & 0.693 & 19470 \\
+\textbf{Weighted Avg} & 0.730 & 0.732 & 0.726 & 19470 \\
+\hline
+\end{tabular}
+}
+\label{tab:logreg-classification-report}
+\end{table}
+It seems to be doing well on class 3 and class 5 but performs poorly on class 0 and 1. We can also see that the support for class 0 and 1 are significantly less compared to class 3 and 5 which have higher than 4000 samples. The reason why class 3 and 5 are high-performing classes is due to the fact that logistic regression relies on learning class-specific weights using the available data. This multi-classification logistic model uses SoftMax which will inherently favour majority classes. The recall for class 0 and 1 is notably low indicating that the model failed to correctly identify more than half of the actual instances from these classes.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/cm-liblinear-l1-normal-training.png}
+    \caption{Confusion Matrix (features dropped)}
+    \label{fig:cm-reduced-data}
+\end{figure}
+Nonetheless comparing Figure~\ref{fig:cm-liblinear-l1} with Figure~\ref{fig:cm-reduced-data}, we can see the increase of TPR across the diagonal. This shows that feature correlation from the dataset does have an impact on the accuracy of the model but in this experiment, it's not significant.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/roc-liblinear-l1-normal-training.png}
+    \caption{ROC (features dropped)}
+    \label{fig:roc-reduced-data}
+\end{figure}
+For a much deeper inspection, The ROC shows strong class separation with AUC score above 0.88 for all classes. Class 1-0 stands out with an AUC of 1.00, which indicates flawless ranking for that particular class. class (1-2) shows the lowest score of 0.89. Despite high AUC values, these results must be interpreted alongside recall and accuracy, as high ranking performance does not always translate to correct predictions in a one-vs-rest strategy. Inspecting the false positive rate, we can see that it's significantly higher KNN's ROC curve in Figure~\ref{fig:knn-roc}.
+\subsubsection{Cross validation on reduced correlation}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/cross-validation - reduced.png}
+    \caption{Learning curve (features dropped)}
+    \label{fig:lr-learning-curve}
+\end{figure}
+To find the true capabilities of the model, we cross-validate with a stratified 4-fold with the liblinear solver and L2 regularisation on the reduced low-correlation feature dataset, which initially illustrates a high variance with the training performance being 100\%. As the training sizes gets larger, we can see the generalisation gap getting smaller and smaller, with the training accuracy decreasing and validation increasing, showing moderate bias and some variance plateauing around $E_{hold-out}=57$\%. This shows on average, the model struggles due to the complexity and overlap of class boundaries in the feature space, especially for minority classes. The model is not overfitting nor underfitting, it assumes a linear relationship between features and log-odds of classification, which might be too simplistic for capturing the nuanced decision surfaces (non-linear features) needed to separate six combined gender-age classes. Furthermore, we understand that switching from a non-parametric model (KNN) to a parametric model such as logistic regression that has the capability to learn weights and tune different hyperparameters, does not necessarily make a better model nor achieve a higher accuracy due to the mechanics of the individual model and loss functions used.
+
+\clearpage
 \section{Model 3: Support Vector Machine (SVM)}
-\subsection{Kernel and regularisation exploration}
-\subsection{Evaluation Metrics and Results}
-\subsection{Training on non-feature selection}
-This time we will explore deeper by training on a the original dataset which is highly correlated along some features and we will use a different kernel.
+To address the limitations of logistic regression, we will look at kernel based methods where we can increase the dimensionality of the model to capture much more complex patterns in the data.
 
+\subsection{Kernel and regularisation exploration}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/svm/svm-linear-vs-kernel-and-regularisation.png}
+    \caption{Enter Caption}
+    \label{fig:svm-kernels}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/svm/svm-cm-linear-vs-kernel-and-regularisation.png}
+    \caption{Enter Caption}
+    \label{fig:svm-cm-kernels}
+\end{figure}
+
+\subsection{Evaluation Metrics and Results}
+
+\begin{table}[H]
+\centering
+\caption{Classification Report (Accuracy = 77.97\%)}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
+\hline
+0 & 0.74 & 0.62 & 0.68 & 1990 \\
+1 & 0.62 & 0.43 & 0.51 & 1320 \\
+2 & 0.76 & 0.80 & 0.78 & 4400 \\
+3 & 0.94 & 0.87 & 0.90 & 1640 \\
+4 & 0.69 & 0.86 & 0.76 & 4060 \\
+5 & 0.87 & 0.81 & 0.84 & 6060 \\
+\hline
+\textbf{Accuracy} & \multicolumn{4}{c|}{0.780} \\
+\textbf{Macro Avg} & 0.77 & 0.73 & 0.75 & 19470 \\
+\textbf{Weighted Avg} & 0.78 & 0.78 & 0.78 & 19470 \\
+\hline
+\end{tabular}
+}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/svm/svm-roc-linear-vs-kernel-and-regularisation.png}
+    \caption{Enter Caption}
+    \label{fig:svm-roc-kernels}
+\end{figure}
+
+
+\label{tab:classification-77-accuracy}
+\end{table}
+
+
+\subsection{Training on non-feature selection}
+
+
+This time we will explore deeper by training on the original dataset which is highly correlated among some features and we will use a different kernel.
+
+\begin{table}[H]
+\centering
+\caption{Classification Report for Best Performing Model}
+\resizebox{\linewidth}{!}{%
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Class} & \textbf{Precision} & \textbf{Recall} & \textbf{F1-Score} & \textbf{Support} \\
+\hline
+0 & 0.929 & 0.882 & 0.905 & 1990 \\
+1 & 0.963 & 0.924 & 0.943 & 1320 \\
+2 & 0.950 & 0.939 & 0.945 & 4400 \\
+3 & 0.981 & 0.958 & 0.969 & 1640 \\
+4 & 0.913 & 0.956 & 0.934 & 4060 \\
+5 & 0.946 & 0.954 & 0.950 & 6060 \\
+\hline
+\textbf{Accuracy} & \multicolumn{4}{c|}{0.942} \\
+\textbf{Macro Avg} & 0.947 & 0.936 & 0.941 & 19470 \\
+\textbf{Weighted Avg} & 0.942 & 0.942 & 0.942 & 19470 \\
+\hline
+\end{tabular}
+}
+\label{tab:svm-poly-report}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/svm/svm-cm-poly.png}
+    \caption{Enter Caption}
+    \label{fig:svm-poly-cm}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/svm/svm-poly-roc.png}
+    \caption{Enter Caption}
+    \label{fig:svm-roc-poly}
+\end{figure}
+
+
+\clearpage
 \section{Comparative Analysis}
+
+
 \subsection{Summary Table of Model Performance}
 
 \subsection{Bias variance trade off}
@@ -247,9 +427,16 @@ This time we will explore deeper by training on a the original dataset which is 
 
 
 \section{Conclusion}
+
+
 \subsection{Summary of Findings}
+
+
 \subsection{Insights on applied models}
 
+
+
+\printbibliography
 
 \clearpage  % or \newpage
 \appendix
@@ -276,15 +463,69 @@ This time we will explore deeper by training on a the original dataset which is 
     \label{fig:distribution-3}
 \end{figure}
 
+\begin{equation}{\dfrac 1 n} \sum^n_{i=1}  \underbrace{\ln ({1+e^{-y_i \theta^\top x_i}})}_{\text{Logistic Loss \ } L(x_i, y_i, \theta_i)}\label{eq:logistic-loss}
+\end{equation}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{LIBLINEAR + L2 (Rounded Coefficients)}
+\begin{tabular}{|c|p{6.5cm}|}
+\hline
+\textbf{Class} & \textbf{Top Features (Coefficient)} \\
+\hline
+0 & \texttt{height\_high} (-3.02), \texttt{height\_medium} (1.75) \\
+1 & \texttt{ay\_rms} (-3.37), \texttt{playYears\_high} (-2.33) \\
+2 & \texttt{a\_mean} (2.19), \texttt{ax\_rms} (-1.96) \\
+3 & \texttt{height\_high} (5.32), \texttt{height\_low} (-3.83) \\
+4 & \texttt{playYears\_high} (-2.36), \texttt{ax\_rms} (1.96) \\
+5 & \texttt{ax\_mean} (-1.72), \texttt{a\_mean} (-1.62) \\
+\hline
+\end{tabular}
+\label{tab:logreg-liblinear-l2}
+\end{table}
+
+\begin{table}[H]
+\centering
+\footnotesize
+\caption{LBFGS + L2 (Rounded Coefficients)}
+\begin{tabular}{|c|p{6.5cm}|}
+\hline
+\textbf{Class} & \textbf{Top Features (Coefficient)} \\
+\hline
+0 & \texttt{height\_high} (-3.38), \texttt{height\_medium} (1.94) \\
+1 & \texttt{ay\_rms} (-3.25), \texttt{playYears\_high} (-2.77) \\
+2 & \texttt{a\_mean} (2.21), \texttt{ax\_rms} (-1.96) \\
+3 & \texttt{height\_high} (6.77), \texttt{height\_low} (-4.29) \\
+4 & \texttt{playYears\_high} (-2.60), \texttt{ax\_rms} (1.95) \\
+5 & \texttt{ax\_mean} (-1.72), \texttt{a\_mean} (-1.53) \\
+\hline
+\end{tabular}
+\label{tab:logreg-lbfgs-l2}
+\end{table}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/scree_plot.png}
+    \caption{Enter Caption}
+    \label{fig:pca-scree}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/pca.png}
+    \caption{PCA}
+    \label{fig:PCA}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=1\linewidth]{images/lr/cross-validation - normal.png}
+    \caption{Learning curve for Logistic Regression}
+    \label{fig:reduced-learning-curve}
+\end{figure}
 
 
 
-
-
-
-
-
-\printbibliography
 
 \end{document}
 
