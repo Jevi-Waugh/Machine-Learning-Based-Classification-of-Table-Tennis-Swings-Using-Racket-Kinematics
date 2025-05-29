@@ -434,11 +434,13 @@ Logistic Regression has moderate bias and low variance, and under fits to the tr
 \subsection{Comparative Analysis}
 The results show that non-linear class boundaries are crucial for this task which is why KNN originally achieved an high accuracy (with $k=3$) of 96\% and SVM with the polynomial kernel performing at 94.2\% which are highly close. KNN originally worked very well because of its distance mechanism, while SVC makes use of the hinge loss, where in our case we had less support vectors $\alpha_i$ influencing the decision boundaries. Logistic regression is last in terms of performance because it assumes strong linear relationship of which the dataset is incapable of providing as proven by low predictions accuracies. Most of its coefficients were very negative demonstrating its ability to generalise well. Overall, the combined label gender-age was able to be classified accurately with some of these models showcasing that there are critical features that strictly determine the differences between and young and older people including gender. We can empirically say that our models such as SVM, was able to still differentiate between men and women primarily because of the difference in biological factors that play out with the recorded  acceleration and angular velocity features.
 \subsection{Insights on applied models and suggestions for future experimentation}
-Another distance metric, we could have used in cross validation for KNN, includes Manhattan and Mahalanobis distance, which accounts for feature distributions and correlation.
+For future experiments, perhaps a stronger assumption in relevance to the distribution of the data should have been made, such as assuming specific different distributions of subsets of features that follow similar distributions.
 
-For a more comprehensive evaluation of SVM, it would be good to experiment with the radial basis function which is mostly used by machine leaning engineers in SVM configuration for complex dataset. The reason we don't is to understand SVM's true capabilities even when restricted to less kernels. Other examples would include the Matérn family of kernels, which again are positive semi-definite. The reason we stress so much for this property is so that $\mathbf{}{K}(\mathbf{X},\mathbf{X})$ is invertible, otherwise it's very difficult to compute.
+A distance metric, we could have used in cross validation for KNN, includes Manhattan and Mahalanobis distance, which accounts for feature distributions and correlation.
 
-Even though Logistic regression was not the strongest model, it did get an accuracy of 71.55\%, which illuminates the idea of employing a bagging or boosting model, such as AdaBoost which can help reduce both bias and variance present,
+For a more comprehensive evaluation of SVM, it would be good to experiment with the radial basis function which is mostly used by machine leaning engineers in SVM configuration for complex datasets. The reason we do not in this paper is to understand SVM's true capabilities when restricted to less kernels. Other examples would include the Matérn family of kernels, which again are positive semi-definite. The reason we stress so much for this property is so that $\mathbf{}{K}(\mathbf{X},\mathbf{X})$ is invertible, otherwise it's very difficult to compute predictions.
+
+Even though Logistic regression was not the strongest model, it did get an accuracy of 71.55\%, which illuminates the idea of employing a bagging or boosting model, such as AdaBoost which can help reduce both bias and variance present.
 
 \printbibliography
 
@@ -499,25 +501,29 @@ Even though Logistic regression was not the strongest model, it did get an accur
 \begin{figure}[H]
     \centering
     \includegraphics[width=0.85\linewidth]{images/distribution_3.png}
-    \caption{Distributions of features (3 of 3).}
+    \caption{Distributions of features (1 of 4).}
     \label{fig:distribution-3}
 \end{figure}
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_1.png}
-    \caption{Distributions of features (1 of 3).}
-    \label{fig:distribution-1}
+    \includegraphics[width=0.85\linewidth, height=0.4\textheight]{images/distribution_2_1.png}
+    \caption{Distributions of features (2 of 4).}
+    \label{fig:distribution-2-1}
 \end{figure}
-
-
-
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_2.png}
-    \caption{Distributions of features (2 of 3).}
-    \label{fig:distribution-2}
+    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_1.png}
+    \caption{Distributions of features (3 of 4).}
+    \label{fig:distribution-1}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth, height=0.4\textheight]{images/distribution_2.png}
+    \caption{Distributions of features (4 of 4).}
+    \label{fig:distribution-2-2}
 \end{figure}
 
 \end{document}
