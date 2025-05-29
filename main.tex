@@ -407,7 +407,7 @@ This time we will explore deeper with a different kernel which is also positive 
 }
 \label{tab:svm-poly-report}
 \end{table}
-Table~\ref{tab:svm-poly-report} demonstrates and accuracy of 91\% for all precision which means that the polynomial kernel was able to determine most of the classes by that metric. All classes had a minimum recall of 88.2\% and a high recall of 95.8\% indicating of how often it's able to identify all relevant positive instances within the dataset. Moreover it has achieved a high accuracy of 94.2\& which is a massive improvement previous discussed kernels. 
+Table~\ref{tab:svm-poly-report} demonstrates and accuracy of 91\% for all precision which means that the polynomial kernel was able to determine most of the classes by that metric. All classes had a minimum recall of 88.2\% and a high recall of 95.8\% indicating low variance and, how often it's able to identify all relevant positive instances within the dataset. Moreover it has achieved a training accuracy of 94.96\% and testing accuracy of 94.2\%, which is a massive improvement from previous discussed kernels. 
 
 \begin{figure}[H]
     \centering
@@ -427,52 +427,26 @@ To further evaluate how well the classes are being separated on a polynomial sca
 he ROC curve for the polynomial SVM reveals near-perfect discrimination across all six classes, with AUC values of 1.00 for five classes and 0.99 for the sixth. This confirms the model’s ability to accurately rank class membership probabilities, validating the effectiveness of the polynomial kernel in capturing the non-linear structure of the gender-age classification task. The steep ROC curves and the minimal deviation from the top-left corner shows how well SVC performs with the polynomial kernel.
 
 This summarises the power of support vector machines along as the right kernel has been selected in relation to the complexity and structure of the dataset. In this case, the polynomial kernel is the most preferred one, not necessarily because of its high accuracy, but primarily because it's more suitable to learning non-linear patterns and it's distinct properties that allows matrices to have real eigenvalues $\lambda$.
-\section{Comparative Analysis}
-
-
-\subsection{Summary Table of Model Performance}
-
-\subsection{Bias variance trade off}
-
-\subsection{Feature Sensitivity and interpretability}
-
-
 \section{Conclusion}
+We will conclude by presenting a strong analysis of the models explored.
+\subsection{Bias variance trade off}
+Logistic Regression has moderate bias and low variance, and under fits to the training data and is unable to capture features under normal training and cross validation. With cross validation, KNN has low bias and high variance, which means that it first the training data very well, but suffers from generalisation issues due to sensitivity to data noise and class imbalance. Otherwise, (without cross-validation), KNN works remarkably well, with low bias and low variance. For SVC, with the polynomial kernel, we have low bias and low variance as proven in the Table~\ref{tab:svm-poly-report}.
+\subsection{Comparative Analysis}
+The results show that non-linear class boundaries are crucial for this task which is why KNN originally achieved an high accuracy (with $k=3$) of 96\% and SVM with the polynomial kernel performing at 94.2\% which are highly close. KNN originally worked very well because of its distance mechanism, while SVC makes use of the hinge loss, where in our case we had less support vectors $\alpha_i$ influencing the decision boundaries. Logistic regression is last in terms of performance because it assumes strong linear relationship of which the dataset is incapable of providing as proven by low predictions accuracies. Most of its coefficients were very negative demonstrating its ability to generalise well. Overall, the combined label gender-age was able to be classified accurately with some of these models showcasing that there are critical features that strictly determine the differences between and young and older people including gender. We can empirically say that our models such as SVM, was able to still differentiate between men and women primarily because of the difference in biological factors that play out with the recorded  acceleration and angular velocity features.
+\subsection{Insights on applied models and suggestions for future experimentation}
+Another distance metric, we could have used in cross validation for KNN, includes Manhattan and Mahalanobis distance, which accounts for feature distributions and correlation.
 
+For a more comprehensive evaluation of SVM, it would be good to experiment with the radial basis function which is mostly used by machine leaning engineers in SVM configuration for complex dataset. The reason we don't is to understand SVM's true capabilities even when restricted to less kernels. Other examples would include the Matérn family of kernels, which again are positive semi-definite. The reason we stress so much for this property is so that $\mathbf{}{K}(\mathbf{X},\mathbf{X})$ is invertible, otherwise it's very difficult to compute.
 
-\subsection{Summary of Findings}
-
-
-\subsection{Insights on applied models}
-
-
+Even though Logistic regression was not the strongest model, it did get an accuracy of 71.55\%, which illuminates the idea of employing a bagging or boosting model, such as AdaBoost which can help reduce both bias and variance present,
 
 \printbibliography
 
-\clearpage  % or \newpage
+% \clearpage  % or \newpage
 \appendix
 \section*{Appendix}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_1.png}
-    \caption{Distributions of features (1 of 3).}
-    \label{fig:distribution-1}
-\end{figure}
 
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_2.png}
-    \caption{Distributions of features (2 of 3).}
-    \label{fig:distribution-2}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=0.85\linewidth]{images/distribution_3.png}
-    \caption{Distributions of features (3 of 3).}
-    \label{fig:distribution-3}
-\end{figure}
 
 \begin{equation}{\dfrac 1 n} \sum^n_{i=1}  \underbrace{\ln ({1+e^{-y_i \theta^\top x_i}})}_{\text{Logistic Loss \ } L(x_i, y_i, \theta_i)}\label{eq:logistic-loss}
 \end{equation}
@@ -517,26 +491,34 @@ This summarises the power of support vector machines along as the right kernel h
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=1\linewidth]{images/lr/scree_plot.png}
-    \caption{Enter Caption}
-    \label{fig:pca-scree}
-\end{figure}
-
-\begin{figure}[H]
-    \centering
-    \includegraphics[width=1\linewidth]{images/lr/pca.png}
-    \caption{PCA}
-    \label{fig:PCA}
-\end{figure}
-\begin{figure}[H]
-    \centering
     \includegraphics[width=1\linewidth]{images/lr/cross-validation - normal.png}
     \caption{Learning curve for Logistic Regression}
     \label{fig:reduced-learning-curve}
 \end{figure}
 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth]{images/distribution_3.png}
+    \caption{Distributions of features (3 of 3).}
+    \label{fig:distribution-3}
+\end{figure}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_1.png}
+    \caption{Distributions of features (1 of 3).}
+    \label{fig:distribution-1}
+\end{figure}
 
 
+
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.85\linewidth, height=0.9\textheight]{images/distribution_2.png}
+    \caption{Distributions of features (2 of 3).}
+    \label{fig:distribution-2}
+\end{figure}
 
 \end{document}
 
