@@ -314,32 +314,40 @@ For a much deeper inspection, The ROC shows strong class separation with AUC sco
     \caption{Learning curve (features dropped)}
     \label{fig:lr-learning-curve}
 \end{figure}
-To find the true capabilities of the model, we cross-validate with a stratified 4-fold with the liblinear solver and L2 regularisation on the reduced low-correlation feature dataset, which initially illustrates a high variance with the training performance being 100\%. As the training sizes gets larger, we can see the generalisation gap getting smaller and smaller, with the training accuracy decreasing and validation increasing, showing moderate bias and some variance plateauing around $E_{hold-out}=57$\%. This shows on average, the model struggles due to the complexity and overlap of class boundaries in the feature space, especially for minority classes. The model is not overfitting nor underfitting, it assumes a linear relationship between features and log-odds of classification, which might be too simplistic for capturing the nuanced decision surfaces (non-linear features) needed to separate six combined gender-age classes. Furthermore, we understand that switching from a non-parametric model (KNN) to a parametric model such as logistic regression that has the capability to learn weights and tune different hyperparameters, does not necessarily make a better model nor achieve a higher accuracy due to the mechanics of the individual model and loss functions used.
+To find the true capabilities of the model, we cross-validate with a stratified 4-fold with the liblinear solver and L2 regularisation on the reduced low-correlation feature dataset, which initially illustrates a high variance with the training performance being 100\%. As the training sizes gets larger, we can see the generalisation gap getting smaller and smaller in Figure~\ref{fig:lr-learning-curve}, with the training accuracy decreasing and validation increasing, showing moderate bias and some variance plateauing around $E_{hold-out}=57$\%. This shows on average, the model struggles due to the complexity and overlap of class boundaries in the feature space, especially for minority classes. The model is not overfitting nor underfitting, it assumes a linear relationship between features and log-odds of classification, which might be too simplistic for capturing the nuanced decision surfaces (non-linear features) needed to separate six combined gender-age classes. Furthermore, we understand that switching from a non-parametric model (KNN) to a parametric model such as logistic regression that has the capability to learn weights and tune different hyperparameters, does not necessarily make a better model nor achieve a higher accuracy due to the mechanics of the individual model and loss functions used.
 
 \clearpage
 \section{Model 3: Support Vector Machine (SVM)}
-To address the limitations of logistic regression, we will look at kernel based methods where we can increase the dimensionality of the model to capture much more complex patterns in the data.
+To address the limitations of logistic regression, we look at kernel based methods where we can increase the dimensionality of the model to capture much more complex patterns in the data.
 
 \subsection{Kernel and regularisation exploration}
+For experimentation purposes through repeated trials with varying hyper parameters and kernels, we will see how the support vector classification works with the learning of the dataset. 
+First we experiment with two kernels that are not generally used in practice for our dataset. Given we have non-linear features, we experiment and use the linear kernel $\kappa(\mathbf{x},\mathbf{x'}) = \mathbf{x}^\top \mathbf{x'}$ to see how well it performs. The sigmoid kernel $\kappa(\mathbf{x}, \mathbf{x}') = \tanh\left(a \mathbf{x}^\top \mathbf{x}' + b\right)$ which introduces non-linear decision boundaries through the tanh function will also be utilised. We foresee sigmoid will output the linear kernel depending on the regularisation $C$ parameter.
+
+Furthermore, we train with our reduced correlated data with previous conditions as other models explored above and, we train our SVC with our regularisation parameter $C$ ranging from $0.1,1,5$. We observe that our linear kernel performs much better than sigmoid even though we have non-linear features and we validate this using mathematical reasoning.
+
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{images/svm/svm-linear-vs-kernel-and-regularisation.png}
-    \caption{Enter Caption}
+    \caption{Linear vs Sigmoid Kernel ($C$=0.1,1,5)}
     \label{fig:svm-kernels}
 \end{figure}
+Figure~\ref{fig:svm-kernels} shows the performance of both kernels. We have specifically chosen two different kernels, where they aren't ideal due to their mechanics and mathematical expectations. If the kernel $\kappa$ is not positive semi-definite then this means that our eigenvalues can be complex and non-real. Sigmoid does not always guarantee a positive semi-definite matrix $X$, and the parameters $a$ and $b$ have to be carefully tuned, which cannot be directly done in \texttt{scikit-learn}'s API. This makes it difficult to directly create a hyperplane with less support vectors resulting with an initial accuracy of 56\%. SVC struggles with learning features and drops its accuracy down from $C=0.1$ to $C=1$ and stabilises with $C$=5.
 
+In comparison, the linear kernel was originally thought to not be an ideal choice, however, it seems that it was able to linearly separate the features linearly (regardless of $C$) even though features are non-linear. Let's remember that the kernel trick allows for a hidden $\mathbf{\phi}(x)^T \mathbf{\phi}(x')$ function to have a large $d$ value which allows for high dimensional data. Additionally, the linear kernel guarantees a positive semi-positive kernel, which explains why it was able to generalise pretty well, averaging an accuracy of 78\% which is 22\% better than sigmoid and 6.5\% better than our original highly-correlated logistic regression model. Our linear kernel allows for an eigenvalue $\lambda >= 0$ and we also have a symmetric matrix $K$ which helps the model create a linear hyperplane to separate complex data reasonably well, especially with enough support vectors.
+
+\subsection{Evaluation Metrics and Results}
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{images/svm/svm-cm-linear-vs-kernel-and-regularisation.png}
-    \caption{Enter Caption}
+    \caption{SVC Confusion matrix (linear kernel)}
     \label{fig:svm-cm-kernels}
 \end{figure}
 
-\subsection{Evaluation Metrics and Results}
-
+Figure~\ref{fig:svm-cm-kernels}, shows good generalisation, with the number of true positives across the diagonal line. The model classifiers much better than logistic regression, and it's classifying class (0-2) almost as well as logistic regression but does significantly better with classes with more data such as class (1-2).
 \begin{table}[H]
 \centering
-\caption{Classification Report (Accuracy = 77.97\%)}
+\caption{Classification Report (linear kernel)}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{|c|c|c|c|c|}
 \hline
@@ -358,27 +366,27 @@ To address the limitations of logistic regression, we will look at kernel based 
 \hline
 \end{tabular}
 }
+\label{tab:classification-77-accuracy}
+\end{table}
+A low recall of 43\% from class 1 indicates that the SVC suffers from class imbalance and limited flexibility. While the linear kernel is computationally efficient and works well with a high $d$, its inability to capture non-linear boundaries limits its performance on complex imbalanced classes for our gender-age problem. 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{images/svm/svm-roc-linear-vs-kernel-and-regularisation.png}
-    \caption{Enter Caption}
+    \caption{SVC ROC Curve}
     \label{fig:svm-roc-kernels}
 \end{figure}
 
+The ROC curve very well confirms that the linear SVM ranks class predictions well, achieving high AUCs across all classes. However, its lower recall for minority classes as discussed in the Table~\ref{tab:classification-77-accuracy} suggests that while the model distinguishes classes effectively in terms of their probability scores, it still struggles to make correct hard classifications under the default decision threshold.
+We conclude that while the linear kernel achieves a decent accuracy of 78\%, it's not considered the best.
 
-\label{tab:classification-77-accuracy}
-\end{table}
+\subsection{More experiments - Polynomial Kernel}
 
-
-\subsection{Training on non-feature selection}
-
-
-This time we will explore deeper by training on the original dataset which is highly correlated among some features and we will use a different kernel.
+This time we will explore deeper with a different kernel which is also positive semi-definite for favourable reasons - Polynomial kernel $\kappa(\mathbf{x}, \mathbf{x}') = (c + \mathbf{}{x}^\top \mathbf{}{x}')^{d - 1}$. We have the same conditions as before primarily because we would like to analyse how our model behaves with different kernels and regularisation parameters.
 
 \begin{table}[H]
 \centering
-\caption{Classification Report for Best Performing Model}
+\caption{Classification Report (Polynomial kernel)}
 \resizebox{\linewidth}{!}{%
 \begin{tabular}{|c|c|c|c|c|}
 \hline
@@ -399,23 +407,26 @@ This time we will explore deeper by training on the original dataset which is hi
 }
 \label{tab:svm-poly-report}
 \end{table}
+Table~\ref{tab:svm-poly-report} demonstrates and accuracy of 91\% for all precision which means that the polynomial kernel was able to determine most of the classes by that metric. All classes had a minimum recall of 88.2\% and a high recall of 95.8\% indicating of how often it's able to identify all relevant positive instances within the dataset. Moreover it has achieved a high accuracy of 94.2\& which is a massive improvement previous discussed kernels. 
 
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{images/svm/svm-cm-poly.png}
-    \caption{Enter Caption}
+    \caption{SVC Confusion matrix (Poly Kernel)}
     \label{fig:svm-poly-cm}
 \end{figure}
-
+Utilising the polynomial kernel introduces non-linear boundaries by modelling certain feature interactions through polynomial terms. Unlike the linear kernel which can only create linear hyperplanes, the polynomial kernel allows our SVC to learn complex relationships between features especially where classes are defined by subtle combinations of demographic (age-gender) and motion-based features. The model was able to capture non-linear features such as swing kinetics, angular velocity etc.. when linear kernel couldn't.
+Figure~\ref{fig:svm-poly-cm} should visually illustrate how much more accurate the model is compared to previous experimentation. Even though it has a high \texttt{TPR}, there is still some confusion between classes such as middle-aged male (1-1) and older male (1-2).
 \begin{figure}[H]
     \centering
     \includegraphics[width=1\linewidth]{images/svm/svm-poly-roc.png}
-    \caption{Enter Caption}
+    \caption{SVM ROC Curve (Poly kernel)}
     \label{fig:svm-roc-poly}
 \end{figure}
+To further evaluate how well the classes are being separated on a polynomial scale, we analyse an ROC curve. Figure~\ref{fig:svm-roc-poly} reveals almost perfect gender-age discrimination across all six classes, with AUC values of 1.0 except for class 5. This confirms  SVC's ability to accurately rank class probabilities, which validates the clear effectiveness of the polynomial kernel.
+he ROC curve for the polynomial SVM reveals near-perfect discrimination across all six classes, with AUC values of 1.00 for five classes and 0.99 for the sixth. This confirms the model’s ability to accurately rank class membership probabilities, validating the effectiveness of the polynomial kernel in capturing the non-linear structure of the gender-age classification task. The steep ROC curves and the minimal deviation from the top-left corner shows how well SVC performs with the polynomial kernel.
 
-
-\clearpage
+This summarises the power of support vector machines along as the right kernel has been selected in relation to the complexity and structure of the dataset. In this case, the polynomial kernel is the most preferred one, not necessarily because of its high accuracy, but primarily because it's more suitable to learning non-linear patterns and it's distinct properties that allows matrices to have real eigenvalues $\lambda$.
 \section{Comparative Analysis}
 
 
